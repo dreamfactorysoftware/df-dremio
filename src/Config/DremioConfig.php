@@ -1,15 +1,13 @@
-<?php
+<?php namespace DreamFactory\Core\Dremio\Config;
 
-namespace DreamFactory\Core\Dremio\Models;
-
+use DreamFactory\Core\Enums\LicenseLevel;
+use DreamFactory\Core\Enums\ServiceTypeGroups;
+use DreamFactory\Core\Services\ServiceManager;
+use DreamFactory\Core\Services\ServiceType;
+use DreamFactory\Core\Dremio\Services\DremioService;
+use DreamFactory\Core\Dremio\Models\DremioConfig as DremioConfigModel;
 use DreamFactory\Core\Models\BaseServiceConfigModel;
-use Illuminate\Support\Arr;
 
-/**
- * Class DremioConfig
- *
- * @package DreamFactory\Core\Dremio\Models
- */
 class DremioConfig extends BaseServiceConfigModel
 {
     /** @var string */
@@ -138,4 +136,21 @@ class DremioConfig extends BaseServiceConfigModel
                 break;
         }
     }
-}
+
+    public static function register()
+    {
+        $serviceType = new ServiceType([
+            'name'                  => 'dremio',
+            'label'                 => 'Dremio',
+            'description'           => 'A service for connecting to Dremio SQL endpoints.',
+            'group'                 => ServiceTypeGroups::DATABASE,
+            'subscription_required' => LicenseLevel::SILVER,
+            'config_handler'        => DremioConfigModel::class,
+            'factory'               => function ($config) {
+                return new DremioService($config);
+            },
+        ]);
+
+        ServiceManager::registerServiceType($serviceType);
+    }
+} 

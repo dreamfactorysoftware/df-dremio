@@ -10,6 +10,7 @@ use DreamFactory\Core\Services\ServiceType;
 use DreamFactory\Core\Enums\ServiceTypeGroups;
 use DreamFactory\Core\Enums\LicenseLevel;
 use DreamFactory\Core\Dremio\Services\DremioService;
+use DreamFactory\Core\Dremio\Database\DremioConnection;
 use Illuminate\Routing\Router;
 use Illuminate\Database\DatabaseManager;
 
@@ -26,34 +27,36 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
 
     public function register()
     {
-        $this->app->resolving('df.db.schema', function (DbSchemaExtensions $db){
-            $db->extend('dremio', function ($connection){
-                return new DremioSchema($connection);
-            });
-        });
-
-        $this->app->resolving('db', function (DatabaseManager $db){
-            $db->extend('dremio', function ($config){
+        $this->app->resolving('db', function (DatabaseManager $db) {
+            $db->extend('dremio', function ($config) {
                 $connector = new DremioConnector();
                 $connection = $connector->connect($config);
 
-                return new DremioConnection($connection, $config['database'], '', $config);
+                return new DremioConnection($connection, $config["database"], $config["prefix"], $config);
             });
         });
 
         $this->app->resolving('df.service', function (ServiceManager $df) {
             $df->addType(
                 new ServiceType([
-                    'name'            => 'dremio',
-                    'label'           => 'DremioService Service',
-                    'description'     => 'Service for DremioService connections.',
-                    'group'           => ServiceTypeGroups::DATABASE,
-                    'config_handler'  => DremioConfig::class,
-                    'factory'         => function ($config) {
+                    'name'                  => 'dremio',
+                    'label'                 => 'Dremio',
+                    'description'           => 'Database service supporting Dremio connections.',
+                    'group'                 => ServiceTypeGroups::DATABASE,
+                    'subscription_required' => LicenseLevel::SILVER,
+                    'config_handler'        => DremioConfig::class,
+                    'factory'               => function ($config) {
                         return new DremioService($config);
                     },
                 ])
             );
+        });
+
+        $this->app->resolving('df.db.schema', function ($db) {
+            /** @var DatabaseManager $db */
+            $db->extend('dremio', function ($connection) {
+                return new DremioSchema($connection);
+            });
         });
     }
 }

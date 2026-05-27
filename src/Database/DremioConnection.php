@@ -105,7 +105,10 @@ class DremioConnection extends Connection
      */
     protected function getDefaultQueryGrammar()
     {
-        return new DremioGrammar;
+        $grammar = new DremioGrammar($this);
+        $grammar->setTablePrefix($this->tablePrefix);
+
+        return $grammar;
     }
 
     /**
@@ -125,7 +128,10 @@ class DremioConnection extends Connection
      */
     protected function getDefaultSchemaGrammar()
     {
-        return $this->withTablePrefix(new SchemaGrammar());
+        $grammar = new SchemaGrammar($this);
+        $grammar->setTablePrefix($this->tablePrefix);
+
+        return $grammar;
     }
 
     /**
